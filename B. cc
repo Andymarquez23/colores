@@ -1,0 +1,222 @@
+#include <iostream>
+#include <string>
+#include <algorithm>  // Para std::sort
+
+const int kMaxClubs = 5;
+const int kMaxMembers = 10;
+
+// Estructura para representar a un miembro
+struct Member {
+    std::string first_name;
+    std::string last_name;
+    int age;
+};
+
+// Estructura para representar a un club con una fila de miembros (lista ordenada)
+struct Club {
+    std::string name;
+    std::string creation_date;
+    int max_capacity;
+    Member* members[kMaxMembers];  // Fila (lista ordenada) de punteros a miembros
+    int member_count;              // Número de miembros en la fila
+};
+
+// Función para inicializar un club
+void InitializeClub(Club& club, const std::string& name, const std::string& date, int capacity) {
+    club.name = name;
+    club.creation_date = date;
+    club.max_capacity = capacity;
+    club.member_count = 0;
+}
+
+// Función para crear un nuevo club
+void CreateClub(Club clubs[], int& num_clubs, int max_clubs) {
+    if (num_clubs >= max_clubs) {
+        std::cout << "No se pueden crear más clubes.\n";
+        return;
+    }
+    
+    Club new_club;
+    std::cout << "Ingrese el nombre del club: ";
+    std::cin >> new_club.name;
+    std::cout << "Ingrese la fecha de creación del club: ";
+    std::cin >> new_club.creation_date;
+    std::cout << "Ingrese la capacidad máxima del club: ";
+    std::cin >> new_club.max_capacity;
+
+    InitializeClub(new_club, new_club.name, new_club.creation_date, new_club.max_capacity);
+    clubs[num_clubs++] = new_club;
+    std::cout << "Club creado con éxito.\n";
+}
+
+// Función para listar todos los clubes
+void ListClubs(const Club clubs[], int num_clubs) {
+    if (num_clubs == 0) {
+        std::cout << "No hay clubes registrados.\n";
+        return;
+    }
+    
+    for (int i = 0; i < num_clubs; i++) {
+        std::cout << "Club " << i + 1 << ": " << clubs[i].name
+                  << " (Fecha de creación: " << clubs[i].creation_date
+                  << ", Capacidad: " << clubs[i].max_capacity << ")\n";
+    }
+}
+
+// Función para registrar un miembro en un club (fila/lista ordenada)
+void RegisterMember(Club& club) {
+    if (club.member_count >= club.max_capacity) {
+        std::cout << "El club ha alcanzado su capacidad máxima.\n";
+        return;
+    }
+    
+    Member* new_member = new Member;
+    std::cout << "Ingrese el nombre del miembro: ";
+    std::cin >> new_member->first_name;
+    std::cout << "Ingrese el apellido del miembro: ";
+    std::cin >> new_member->last_name;
+    std::cout << "Ingrese la edad del miembro: ";
+    std::cin >> new_member->age;
+
+    club.members[club.member_count++] = new_member;
+
+    // Ordenar la lista de miembros por apellido al registrarlo
+    std::sort(club.members, club.members + club.member_count,
+              [](Member* a, Member* b) {
+                  return a->last_name < b->last_name;  // Ordenar por apellido
+              });
+
+    std::cout << "Miembro registrado exitosamente en el club (Fila).\n";
+}
+
+// Función para listar todos los miembros de un club en orden
+void ListMembers(const Club& club) {
+    if (club.member_count == 0) {
+        std::cout << "No hay miembros registrados en este club.\n";
+        return;
+    }
+
+    std::cout << "Miembros del club " << club.name << ":\n";
+    for (int i = 0; i < club.member_count; i++) {
+        std::cout << i + 1 << ". " << club.members[i]->first_name
+                  << " " << club.members[i]->last_name
+                  << ", Edad: " << club.members[i]->age << "\n";
+    }
+}
+
+// Función para contar el número de miembros de un club
+void TotalMembers(const Club& club) {
+    std::cout << "Número total de miembros en el club " << club.name << ": "
+              << club.member_count << "\n";
+}
+
+// Función para buscar un miembro por apellido usando búsqueda binaria
+void SearchMemberByLastName(const Club& club, const std::string& last_name) {
+    int left = 0;
+    int right = club.member_count - 1;
+
+    while (left <= right) {
+        int mid = left + (right - left) / 2;
+        if (club.members[mid]->last_name == last_name) {
+            std::cout << "Miembro encontrado: " << club.members[mid]->first_name << " "
+                      << club.members[mid]->last_name << ", Edad: " << club.members[mid]->age << "\n";
+            return;
+        }
+        if (club.members[mid]->last_name < last_name) {
+            left = mid + 1;
+        } else {
+            right = mid - 1;
+        }
+    }
+    std::cout << "Miembro no encontrado.\n";
+}
+
+int main() {
+    Club clubs[kMaxClubs];
+    int num_clubs = 0;
+    int option;
+    
+    do {
+        std::cout << "\nMenú de gestión de clubes:\n"
+                  << "1. Crear un nuevo club\n"
+                  << "2. Listar todos los clubes\n"
+                  << "3. Registrar un miembro (Fila)\n"
+                  << "4. Listar miembros de un club\n"
+                  << "5. Contar miembros de un club\n"
+                  << "6. Buscar miembro por apellido\n"
+                  << "0. Salir\n"
+                  << "Seleccione una opción: ";
+        std::cin >> option;
+        
+        switch (option) {
+            case 1:
+                CreateClub(clubs, num_clubs, kMaxClubs);
+                break;
+            case 2:
+                ListClubs(clubs, num_clubs);
+                break;
+            case 3: {
+                int club_index;
+                std::cout << "Seleccione el club (1-" << num_clubs << "): ";
+                std::cin >> club_index;
+                if (club_index >= 1 && club_index <= num_clubs) {
+                    RegisterMember(clubs[club_index - 1]);
+                } else {
+                    std::cout << "Índice de club no válido.\n";
+                }
+                break;
+            }
+            case 4: {
+                int club_index;
+                std::cout << "Seleccione el club (1-" << num_clubs << "): ";
+                std::cin >> club_index;
+                if (club_index >= 1 && club_index <= num_clubs) {
+                    ListMembers(clubs[club_index - 1]);
+                } else {
+                    std::cout << "Índice de club no válido.\n";
+                }
+                break;
+            }
+            case 5: {
+                int club_index;
+                std::cout << "Seleccione el club (1-" << num_clubs << "): ";
+                std::cin >> club_index;
+                if (club_index >= 1 && club_index <= num_clubs) {
+                    TotalMembers(clubs[club_index - 1]);
+                } else {
+                    std::cout << "Índice de club no válido.\n";
+                }
+                break;
+            }
+            case 6: {
+                int club_index;
+                std::cout << "Seleccione el club (1-" << num_clubs << "): ";
+                std::cin >> club_index;
+                if (club_index >= 1 && club_index <= num_clubs) {
+                    std::string last_name;
+                    std::cout << "Ingrese el apellido del miembro a buscar: ";
+                    std::cin >> last_name;
+                    SearchMemberByLastName(clubs[club_index - 1], last_name);
+                } else {
+                    std::cout << "Índice de club no válido.\n";
+                }
+                break;
+            }
+            case 0:
+                std::cout << "Saliendo del programa.\n";
+                break;
+            default:
+                std::cout << "Opción no válida. Intente nuevamente.\n";
+                break;
+        }
+    } while (option != 0);
+    
+    // Liberar memoria de miembros
+    for (int i = 0; i < num_clubs; i++) {
+        for (int j = 0; j < clubs[i].member_count; j++) {
+            delete clubs[i].members[j];
+        }
+    }
+
+    return 0;
+}
